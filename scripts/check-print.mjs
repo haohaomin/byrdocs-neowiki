@@ -1,6 +1,7 @@
 // Run against the Astro development server; uses a dedicated Playwright CLI session.
 import { execFileSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
+import { checkPrintEdgeCases } from "./print-edge-cases.mjs";
 
 const baseURL = process.argv[2] || "http://127.0.0.1:4331";
 const session = "neowiki-print";
@@ -179,7 +180,12 @@ mkdirSync('output/playwright', {recursive: true});
 const cli = (...args) => execFileSync('npx', ['--yes', '--package', '@playwright/cli', 'playwright-cli', '--session', session, ...args], {encoding: 'utf8', maxBuffer: 8 * 1024 * 1024});
 try {
   cli('open', baseURL);
-  const result = cli('run-code', `async (page) => { return await (${checkPrint.toString()})(page, ${JSON.stringify(baseURL)}); }`);
+  const result = cli('run-code', `async (page) => {
+    const base = await (${checkPrint.toString()})(page, ${JSON.stringify(baseURL)});
+    const edge = await (${checkPrintEdgeCases.toString()})(page, ${JSON.stringify(baseURL)});
+    if (edge.failures.length) throw new Error(JSON.stringify(edge.failures));
+    return { ...base, checks: base.checks + edge.checks, edgeCases: edge.results };
+  }`);
   writeFileSync('output/playwright/check-print.log', result);
   console.log(result.split('### Ran Playwright code')[0]);
   if (result.includes('### Error') || !/"status"\s*:\s*"PASS"/.test(result)) process.exitCode = 1;

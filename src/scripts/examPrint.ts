@@ -27,7 +27,7 @@ function preparePrintDocument(options: PrintOptions): HTMLElement | null {
   }
   if (!options.info) questions.querySelector(".exam-info-box")?.remove();
 
-  printDocument.querySelectorAll(".related-exams, dialog, .exam-choices-submit, .code-toolbar, .exam-figure-missing")
+  printDocument.querySelectorAll(".related-exams, dialog, .exam-choices-submit, .code-toolbar")
     .forEach((element) => element.remove());
   printDocument.querySelectorAll("[id]").forEach((element) => {
     // Preserve IDs inside SVG diagrams, which may be used by clip paths or <use>.
@@ -61,6 +61,17 @@ function preparePrintDocument(options: PrintOptions): HTMLElement | null {
     }
   });
   printDocument.querySelectorAll<HTMLImageElement>("img").forEach((image) => {
+    const figure = image.closest<HTMLElement>(".exam-figure");
+    if (figure && image.matches(".exam-figure-image")) {
+      // cloneNode does not copy the live Figure component's error listeners.
+      const update = () => {
+        if (image.naturalWidth > 0) delete figure.dataset.state;
+        else figure.dataset.state = "missing";
+      };
+      image.addEventListener("load", update);
+      image.addEventListener("error", update);
+      if (image.complete) update();
+    }
     image.loading = "eager";
   });
 
@@ -91,6 +102,7 @@ export function initExamPrint(): void {
   let options: PrintOptions = { answers: true, info: false, placement: "end" };
   let printDocument: HTMLElement | null = null;
   let preparing = false;
+  let generation = 0;
   const syncPlacement = () => { placement.disabled = !answers.checked; };
   const openDialog = () => {
     if (preparing) return;
@@ -107,6 +119,7 @@ export function initExamPrint(): void {
     if (printDocument) document.documentElement.classList.add("exam-printing");
   };
   const finish = () => {
+    generation++;
     printDocument?.remove();
     printDocument = null;
     document.documentElement.classList.remove("exam-printing");
@@ -125,6 +138,7 @@ export function initExamPrint(): void {
       placement: placement.querySelector<HTMLInputElement>("input:checked")?.value === "inline" ? "inline" : "end",
     };
     preparing = true;
+    const job = ++generation;
     confirm.disabled = true;
     dialog.close();
     try {
@@ -137,10 +151,10 @@ export function initExamPrint(): void {
       } finally {
         clearTimeout(timeout);
       }
-      if (!preparing || !printDocument) return;
+      if (job !== generation || !preparing || !printDocument) return;
       window.print();
     } catch (error) {
-      finish();
+      if (job === generation) finish();
       throw error;
     }
   });

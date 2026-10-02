@@ -4,7 +4,7 @@
   @page { size: A4; margin: 18mm 15mm; }
 
   html.exam-printing {
-    color-scheme: light;
+    color-scheme: light !important;
     --background: #fff;
     --black: #111;
   }
@@ -104,6 +104,11 @@
   }
   .exam-print-document .exam-figure-float .exam-figure-image { width: auto; max-height: 75mm; }
   .exam-print-document .exam-figure-media { padding: 0; }
+  .exam-print-document .exam-figure-missing {
+    min-height: 0;
+    padding: 0.6em;
+    border: 0.5pt dashed #777;
+  }
   .exam-print-document img { max-width: 100%; max-height: 220mm; object-fit: contain; }
   .exam-print-document figure { break-inside: avoid; }
   .exam-print-document .print-answers-appendix { break-before: page; }
