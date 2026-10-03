@@ -53,7 +53,7 @@ export async function checkPrintEdgeCases(page, baseURL) {
     return {visible: !!placeholder && getComputedStyle(placeholder).display !== 'none', scheme: getComputedStyle(document.documentElement).colorScheme};
   });
   check('Unavailable figures retain a visible warning in print', missing.visible, missing);
-  check('Print overrides the live inline dark color scheme', missing.scheme === 'light', missing.scheme);
+  check('Print retains the live dark color scheme', missing.scheme === 'dark', missing.scheme);
   await page.locator('.exam-print-document .exam-figure[data-state="missing"]').first().screenshot({path: 'output/playwright/missing-figure.png'});
   // A copied image may fail only after preparation, or succeed after the live
   // page had marked it missing. Exercise both listeners on the print copy.

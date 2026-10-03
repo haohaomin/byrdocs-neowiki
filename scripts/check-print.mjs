@@ -40,8 +40,20 @@ async function checkPrint(page, baseURL) {
     await page.emulateMedia({media: 'screen'});
     await page.evaluate(mode => {
       document.documentElement.classList.toggle('dark', mode === 'inline');
+      document.documentElement.style.colorScheme = mode === 'inline' ? 'dark' : 'light';
       document.querySelector('#examPrint').click();
     }, mode);
+    const screenColors = await page.evaluate(() => {
+      const root = document.querySelector('main .wiki-content');
+      const style = element => ({color: getComputedStyle(element).color, background: getComputedStyle(element).backgroundColor});
+      return {
+        text: style(root), body: style(document.body),
+        heading: style(root.querySelector('h2')),
+        code: style(root.querySelector('.astro-code')),
+        tokens: [...new Set([...root.querySelectorAll('.exam-page-main .astro-code .line > span')].map(e => getComputedStyle(e).color))],
+        scheme: getComputedStyle(document.documentElement).colorScheme,
+      };
+    });
     await page.locator('#examPrintAnswers').setChecked(mode !== 'none');
     await page.locator('#examPrintInfo').setChecked(mode === 'inline');
     assert(await page.locator('#examPrintAnswerPlacement').evaluate(el => el.disabled) === (mode === 'none'), 'Placement disabled state');
@@ -71,6 +83,10 @@ async function checkPrint(page, baseURL) {
         tools: root.querySelectorAll('.related-exams, .exam-choices-submit, dialog').length,
         footer: root.querySelector('.print-footer').textContent,
         color: getComputedStyle(root).color,
+        theme: (() => {
+          const style = element => ({color: getComputedStyle(element).color, background: getComputedStyle(element).backgroundColor});
+          return {text: style(root), body: style(document.body), heading: style(root.querySelector('h2')), code: style(root.querySelector('.astro-code')), scheme: getComputedStyle(document.documentElement).colorScheme};
+        })(),
         selected: [...root.querySelectorAll('input')].some(e => e.checked),
         codeColors: [...new Set([...questions.querySelectorAll('.astro-code .line > span')].map(e => getComputedStyle(e).color))],
         appendixCodeColors: [...new Set([...root.querySelectorAll('.print-answers-appendix .astro-code .line > span')].map(e => getComputedStyle(e).color))],
@@ -83,13 +99,16 @@ async function checkPrint(page, baseURL) {
     assert(state.appendix === (mode === 'end' ? 1 : 0), mode + ': appendix');
     if (mode === 'end') assert(state.appendixItems > 20, 'Missing appendix answers');
     assert(state.onlyPrint && state.tools === 0 && !state.selected, mode + ': UI/selection leaked to print');
-    assert(state.color === 'rgb(17, 17, 17)' && state.footer.includes('CC BY-NC-SA 4.0'), 'Print colors/license');
-    assert(state.codeColors.length >= 3 && state.codeColors.includes('rgb(215, 58, 73)'), mode + ': light syntax highlighting lost');
+    assert(state.footer.includes('CC BY-NC-SA 4.0'), 'Print license');
+    for (const key of ['text', 'body', 'heading', 'code', 'scheme']) {
+      assert(JSON.stringify(state.theme[key]) === JSON.stringify(screenColors[key]), mode + ': changed screen colors for ' + key);
+    }
+    assert(state.codeColors.length >= 3 && state.codeColors.every(color => screenColors.tokens.includes(color)), mode + ': original syntax highlighting lost');
     if (mode === 'end') assert(state.appendixCodeColors.length >= 3, 'Appendix syntax highlighting lost');
     await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
     assert(await page.locator('.exam-print-document').count() === 1, 'Repeated beforeprint created duplicate');
     // PDF generation invokes the real browser print lifecycle, including afterprint.
-    await page.pdf({path: 'output/playwright/print-' + mode + '.pdf', preferCSSPageSize: true, printBackground: false});
+    await page.pdf({path: 'output/playwright/print-' + mode + '.pdf', preferCSSPageSize: true, printBackground: true});
     await page.evaluate(() => {
       window.dispatchEvent(new Event('afterprint'));
       window.dispatchEvent(new Event('afterprint'));

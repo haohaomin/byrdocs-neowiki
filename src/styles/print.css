@@ -3,12 +3,12 @@
 @media print {
   @page { size: A4; margin: 18mm 15mm; }
 
-  html.exam-printing {
-    color-scheme: light !important;
-    --background: #fff;
-    --black: #111;
+  html.exam-printing,
+  html.exam-printing body,
+  .exam-print-document {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
-  html.exam-printing body { background: #fff !important; }
   html.exam-printing body > :not(.exam-print-document) { display: none !important; }
   html.exam-printing .exam-print-document {
     display: block !important;
@@ -18,12 +18,8 @@
     padding: 0;
     font-size: 10.5pt;
     line-height: 1.65;
-    color: #111 !important;
-    background: #fff !important;
   }
   .exam-print-document * {
-    color: #111 !important;
-    background-color: transparent !important;
     box-shadow: none !important;
     text-shadow: none !important;
     animation: none !important;
@@ -45,10 +41,9 @@
   .exam-print-document .exam-blank {
     appearance: none;
     border: 0 !important;
-    border-bottom: 0.5pt solid #777 !important;
+    border-bottom: 0.5pt solid var(--black) !important;
     border-radius: 0 !important;
     box-shadow: none !important;
-    background: transparent !important;
     min-width: 0 !important;
   }
   .exam-print-document .exam-blank.is-disabled {
@@ -63,7 +58,6 @@
   .exam-print-document .print-answers-appendix .exam-blank-answer { visibility: visible !important; }
   .exam-print-document .exam-solution {
     overflow: visible;
-    border: 0.5pt solid #aaa;
     border-radius: 3mm;
     break-inside: avoid;
   }
@@ -76,12 +70,11 @@
     border-color: transparent !important;
     outline: none !important;
   }
-  .exam-print-document .exam-choice-indicator { border: 1pt solid #888 !important; }
   .exam-print-document .exam-choice-indicator::after { content: none !important; }
-  .exam-print-document .exam-print-correct { outline: 0.7pt solid #111 !important; outline-offset: -1pt; }
+  .exam-print-document .exam-print-correct { outline: 0.7pt solid var(--green) !important; outline-offset: -1pt; }
   .exam-print-document .exam-print-correct .exam-choice-indicator::after {
     content: "" !important;
-    background: #111 !important;
+    background: var(--green) !important;
     position: absolute;
     inset: 2px;
     border-radius: inherit;
@@ -90,13 +83,6 @@
     white-space: pre-wrap !important;
     overflow-wrap: anywhere;
     overflow: visible;
-  }
-  /* Use Shiki's light palette on paper; the screen palette stays unchanged. */
-  .exam-print-document .astro-code,
-  .exam-print-document .astro-code * {
-    color: var(--shiki-light, #111) !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
   }
   .exam-print-document :is(.katex-display, .exam-figure, table) { overflow: visible; max-width: 100%; }
   .exam-print-document .exam-figure-trigger { border: 0 !important; padding: 0; }
@@ -114,7 +100,6 @@
   .exam-print-document .exam-figure-missing {
     min-height: 0;
     padding: 0.6em;
-    border: 0.5pt dashed #777;
   }
   .exam-print-document img { max-width: 100%; max-height: 220mm; object-fit: contain; }
   .exam-print-document figure { break-inside: avoid; }
@@ -135,7 +120,7 @@
   .exam-print-document .print-footer {
     margin-top: 2em;
     padding-top: 0.7em;
-    border-top: 0.5pt solid #aaa;
+    border-top: 0.5pt solid currentColor;
     font-size: 8pt;
     overflow-wrap: anywhere;
     break-inside: avoid;
