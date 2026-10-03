@@ -18,6 +18,10 @@ export default defineConfig({
     site: import.meta.env.WIKI_SITE_URL,
     integrations: [mdx()],
     markdown: {
+        shikiConfig: {
+            themes: { dark: "github-dark", light: "github-light" },
+            defaultColor: "dark",
+        },
         remarkPlugins: [remarkMath, remarkChoices],
         rehypePlugins: [rehypeKatex],
     },

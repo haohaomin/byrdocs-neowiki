@@ -72,6 +72,8 @@ async function checkPrint(page, baseURL) {
         footer: root.querySelector('.print-footer').textContent,
         color: getComputedStyle(root).color,
         selected: [...root.querySelectorAll('input')].some(e => e.checked),
+        codeColors: [...new Set([...questions.querySelectorAll('.astro-code .line > span')].map(e => getComputedStyle(e).color))],
+        appendixCodeColors: [...new Set([...root.querySelectorAll('.print-answers-appendix .astro-code .line > span')].map(e => getComputedStyle(e).color))],
       };
     });
     assert(state.blankWidth > 0 && state.blankVisibility === (mode === 'inline' ? 'visible' : 'hidden'), mode + ': blank visibility/space');
@@ -82,6 +84,8 @@ async function checkPrint(page, baseURL) {
     if (mode === 'end') assert(state.appendixItems > 20, 'Missing appendix answers');
     assert(state.onlyPrint && state.tools === 0 && !state.selected, mode + ': UI/selection leaked to print');
     assert(state.color === 'rgb(17, 17, 17)' && state.footer.includes('CC BY-NC-SA 4.0'), 'Print colors/license');
+    assert(state.codeColors.length >= 3 && state.codeColors.includes('rgb(215, 58, 73)'), mode + ': light syntax highlighting lost');
+    if (mode === 'end') assert(state.appendixCodeColors.length >= 3, 'Appendix syntax highlighting lost');
     await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
     assert(await page.locator('.exam-print-document').count() === 1, 'Repeated beforeprint created duplicate');
     // PDF generation invokes the real browser print lifecycle, including afterprint.

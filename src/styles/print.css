@@ -91,6 +91,13 @@
     overflow-wrap: anywhere;
     overflow: visible;
   }
+  /* Use Shiki's light palette on paper; the screen palette stays unchanged. */
+  .exam-print-document .astro-code,
+  .exam-print-document .astro-code * {
+    color: var(--shiki-light, #111) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
   .exam-print-document :is(.katex-display, .exam-figure, table) { overflow: visible; max-width: 100%; }
   .exam-print-document .exam-figure-trigger { border: 0 !important; padding: 0; }
   /* Floats otherwise drift beside later questions across page boundaries. */
